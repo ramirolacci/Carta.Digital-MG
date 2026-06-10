@@ -54,13 +54,10 @@ const Admin = () => {
 
           {/* User info & logout */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <span className="hidden md:block text-sm text-text-secondary truncate max-w-[180px]">
-              {user.displayName}
-            </span>
             <Link
               to="/"
               className="flex items-center gap-1.5 text-sm font-semibold text-text-secondary
-                         hover:text-primary px-3 py-2 rounded-btn hover:bg-slate-50 transition-colors"
+                         hover:text-primary px-3 py-2 rounded-btn hover:bg-primary/10 transition-colors"
             >
               <Eye size={16} />
               <span className="hidden sm:inline">Ver Sitio</span>
@@ -68,7 +65,7 @@ const Admin = () => {
             <button
               onClick={handleLogout}
               className="flex items-center gap-1.5 text-sm font-semibold text-text-secondary
-                         hover:text-primary px-3 py-2 rounded-btn hover:bg-slate-50 transition-colors"
+                         hover:text-primary px-3 py-2 rounded-btn hover:bg-primary/10 transition-colors"
               aria-label="Cerrar sesión"
             >
               <LogOut size={16} />

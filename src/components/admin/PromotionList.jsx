@@ -1,6 +1,7 @@
 // src/components/admin/PromotionList.jsx
-import { memo, useState } from 'react';
+import { memo, useLayoutEffect, useRef, useState } from 'react';
 import { Pencil, Trash2, Eye, EyeOff, Calendar, ImageOff } from 'lucide-react';
+import gsap from 'gsap';
 import { formatDateShort, isPromotionCurrent } from '../../utils/helpers';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
@@ -37,7 +38,7 @@ const PromotionListItem = memo(({ promotion, onEdit, onDelete }) => {
   const isCurrent = isPromotionCurrent(promotion.date);
 
   return (
-    <div className="bg-white rounded-card shadow-card overflow-hidden flex flex-col">
+    <div data-promo-card className="bg-white rounded-card shadow-card overflow-hidden flex flex-col">
       {/* Image */}
       <div className="relative aspect-video bg-background-secondary overflow-hidden">
         {imgError ? (
@@ -116,14 +117,41 @@ const PromotionListItem = memo(({ promotion, onEdit, onDelete }) => {
 
 PromotionListItem.displayName = 'PromotionListItem';
 
-const PromotionList = ({ promotions, onEdit, onDelete, isDeleting }) => {
+const PromotionList = ({ promotions, onEdit, onDelete, isDeleting, transitionKey }) => {
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const gridRef = useRef(null);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     await onDelete(deleteTarget.id);
     setDeleteTarget(null);
   };
+
+  useLayoutEffect(() => {
+    const grid = gridRef.current;
+    if (!grid || !promotions.length) return;
+
+    const cards = grid.querySelectorAll('[data-promo-card]');
+
+    gsap.killTweensOf([grid, cards]);
+    gsap.fromTo(
+      grid,
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.28, ease: 'power2.out', clearProps: 'opacity,transform' }
+    );
+    gsap.fromTo(
+      cards,
+      { opacity: 0, y: 14 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.4,
+        ease: 'power2.out',
+        stagger: 0.05,
+        clearProps: 'opacity,transform',
+      }
+    );
+  }, [promotions, transitionKey]);
 
   if (!promotions.length) {
     return (
@@ -135,7 +163,7 @@ const PromotionList = ({ promotions, onEdit, onDelete, isDeleting }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {promotions.map((promo) => (
           <PromotionListItem
             key={promo.id}

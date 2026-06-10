@@ -10,14 +10,15 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.3.0",
     "firebase": "^10.7.0",
+    "gsap": "^3.15.0",
     "lucide-react": "^0.383.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.0",
     "react-router-dom": "^6.20.0",
-    "zod": "^3.22.0",
-    "@hookform/resolvers": "^3.3.0"
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",

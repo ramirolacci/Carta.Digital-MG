@@ -1,5 +1,5 @@
 // src/components/admin/PromotionForm.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { promotionSchema } from '../../utils/validators';
@@ -7,13 +7,15 @@ import { getTodayISO } from '../../utils/helpers';
 import ImageUploader from './ImageUploader';
 import Button from '../common/Button';
 import Alert from '../common/Alert';
+import RequiredAsterisk from '../common/RequiredAsterisk';
 import { Save, X } from 'lucide-react';
 
-const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
+const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubmitting }) => {
   const [imageFile, setImageFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formError, setFormError] = useState(null);
   const [imageRequired, setImageRequired] = useState(false);
+  const descriptionRef = useRef(null);
 
   const isEditing = !!initialData;
 
@@ -45,6 +47,21 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
     }
   }, [initialData, reset]);
 
+  const descriptionRegister = register('description');
+
+  const resizeDescription = () => {
+    const textarea = descriptionRef.current;
+
+    if (!textarea) return;
+
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+
+  useEffect(() => {
+    resizeDescription();
+  }, [watch('description')]);
+
   const activeValue = watch('active');
 
   const handleFormSubmit = async (data) => {
@@ -67,7 +84,6 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
     }
   };
 
-  const titleCount = watch('title')?.length || 0;
   const descCount = watch('description')?.length || 0;
 
   return (
@@ -80,7 +96,7 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
         {/* Image upload */}
         <div>
           <label className="label">
-            Imagen <span className="text-error">*</span>
+            Imagen <RequiredAsterisk />
           </label>
           <ImageUploader
             currentImageUrl={initialData?.imageUrl}
@@ -97,7 +113,7 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
         {/* Title */}
         <div>
           <label className="label" htmlFor="title">
-            Título <span className="text-error">*</span>
+            Título <RequiredAsterisk />
           </label>
           <input
             id="title"
@@ -106,12 +122,9 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
             placeholder="Ej: 2x1 en pizzas todos los martes"
             maxLength={100}
           />
-          <div className="flex justify-between mt-1">
-            {errors.title ? (
-              <p className="text-error text-xs">{errors.title.message}</p>
-            ) : <span />}
-            <span className="text-xs text-text-secondary">{titleCount}/100</span>
-          </div>
+          {errors.title && (
+            <p className="text-error text-xs mt-1">{errors.title.message}</p>
+          )}
         </div>
 
         {/* Description */}
@@ -121,9 +134,14 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
           </label>
           <textarea
             id="description"
-            {...register('description')}
-            className={`input-field resize-none ${errors.description ? 'error' : ''}`}
-            rows={3}
+            {...descriptionRegister}
+            ref={(element) => {
+              descriptionRegister.ref(element);
+              descriptionRef.current = element;
+            }}
+            onInput={resizeDescription}
+            className={`input-field resize-none overflow-hidden ${errors.description ? 'error' : ''}`}
+            rows={1}
             placeholder="Contá más detalles sobre la promoción..."
             maxLength={300}
           />
@@ -138,7 +156,7 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
         {/* Date */}
         <div>
           <label className="label" htmlFor="date">
-            Fecha de la promoción <span className="text-error">*</span>
+            Fecha de la promoción <RequiredAsterisk />
           </label>
           <input
             id="date"
@@ -191,16 +209,6 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-background-secondary rounded-b-card">
         <Button
-          type="button"
-          variant="ghost"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          icon={X}
-          size="sm"
-        >
-          Cancelar
-        </Button>
-        <Button
           type="submit"
           variant="primary"
           loading={isSubmitting}
@@ -208,6 +216,16 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
           size="sm"
         >
           {isEditing ? 'Guardar cambios' : 'Crear promoción'}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onRequestClose || onCancel}
+          disabled={isSubmitting}
+          icon={X}
+          size="sm"
+        >
+          Cancelar
         </Button>
       </div>
     </form>

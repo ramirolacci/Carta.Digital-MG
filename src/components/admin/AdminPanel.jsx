@@ -180,6 +180,7 @@ const AdminPanel = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           isDeleting={isDeleting}
+          transitionKey={`${filterStatus}-${sortOrder}`}
         />
       )}
 
