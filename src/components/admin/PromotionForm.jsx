@@ -62,8 +62,6 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
     resizeDescription();
   }, [watch('description')]);
 
-  const activeValue = watch('active');
-
   const handleFormSubmit = async (data) => {
     setFormError(null);
     setImageRequired(false);
@@ -183,8 +181,8 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
                   className={`
                     relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full
                     border-2 border-transparent transition-colors duration-200 ease-in-out
-                    focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-                    ${field.value ? 'bg-secondary' : 'bg-gray-200'}
+                    focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:ring-offset-2
+                    ${field.value ? 'bg-green-500' : 'bg-gray-200'}
                   `}
                   role="switch"
                   aria-checked={field.value}

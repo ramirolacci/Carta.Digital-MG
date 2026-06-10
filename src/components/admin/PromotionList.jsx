@@ -1,8 +1,8 @@
 // src/components/admin/PromotionList.jsx
 import { memo, useLayoutEffect, useRef, useState } from 'react';
-import { Pencil, Trash2, Eye, EyeOff, Calendar, ImageOff } from 'lucide-react';
+import { Pencil, Trash2, EyeOff, Calendar, ImageOff } from 'lucide-react';
 import gsap from 'gsap';
-import { formatDateShort, isPromotionCurrent } from '../../utils/helpers';
+import { formatDateShort } from '../../utils/helpers';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 
@@ -35,7 +35,6 @@ const ConfirmDeleteModal = ({ promotion, onConfirm, onCancel, isDeleting }) => (
 
 const PromotionListItem = memo(({ promotion, onEdit, onDelete }) => {
   const [imgError, setImgError] = useState(false);
-  const isCurrent = isPromotionCurrent(promotion.date);
 
   return (
     <div data-promo-card className="bg-white rounded-card shadow-card overflow-hidden flex flex-col">
@@ -58,7 +57,7 @@ const PromotionListItem = memo(({ promotion, onEdit, onDelete }) => {
         <div className="absolute top-2 right-2">
           {promotion.active ? (
             <span className="badge-active">
-              <Eye size={10} />
+              <span className="h-2 w-2 rounded-full bg-green-500" />
               Activa
             </span>
           ) : (
@@ -68,14 +67,6 @@ const PromotionListItem = memo(({ promotion, onEdit, onDelete }) => {
             </span>
           )}
         </div>
-        {/* Vigente badge */}
-        {promotion.active && isCurrent && (
-          <div className="absolute top-2 left-2">
-            <span className="inline-flex items-center gap-1 bg-secondary text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-              Vigente
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Content */}
