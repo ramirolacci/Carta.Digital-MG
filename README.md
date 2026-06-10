@@ -73,18 +73,6 @@ Feed scrolleable de promociones con panel de administración completo, construid
 
 ---
 
-## 📦 Deploy
-
-### Firebase Hosting
-
-```bash
-npm run build
-npm install -g firebase-tools
-firebase login
-firebase init hosting
-firebase deploy
-```
-
 ### Vercel
 
 ```bash
