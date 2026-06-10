@@ -73,17 +73,6 @@ Feed scrolleable de promociones con panel de administración completo, construid
 
 ---
 
-### Vercel
-
-```bash
-npm run build
-npx vercel --prod
-```
-
-Recordar agregar las variables de entorno en el dashboard del proveedor.
-
----
-
 ## 📸 Formatos de imagen soportados
 
 - JPEG / JPG
