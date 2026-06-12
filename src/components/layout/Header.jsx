@@ -47,13 +47,8 @@ const Header = () => {
           <img
             src={`${import.meta.env.BASE_URL}Logo Mi Gusto 2025.png`}
             alt="Mi Gusto Logo"
-            className="w-10 h-10 object-contain rounded-btn"
+            className="w-12 h-12 object-contain rounded-btn"
           />
-          <div>
-            <span className="text-xs text-text font-bold uppercase tracking-wide">
-              Carta Digital
-            </span>
-          </div>
         </a>
 
         {/* Nav */}

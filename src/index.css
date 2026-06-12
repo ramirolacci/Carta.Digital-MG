@@ -37,10 +37,7 @@
     animation: fadeInUp 0.4s ease forwards;
   }
 
-  .feed-card:hover {
-    @apply shadow-card-hover;
-    transform: translateY(-2px) scale(1.005);
-  }
+
 
   .btn-primary {
     @apply bg-primary text-white font-semibold py-3 px-6 rounded-btn

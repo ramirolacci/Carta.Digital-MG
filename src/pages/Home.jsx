@@ -128,7 +128,7 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background py-6">
+    <div className="min-h-screen bg-background mt-0 pt-0 pb-6 sm:py-6">
       <FeedList
         promotions={promotions}
         loading={loading}

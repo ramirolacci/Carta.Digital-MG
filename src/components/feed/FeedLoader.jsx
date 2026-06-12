@@ -1,7 +1,7 @@
 // src/components/feed/FeedLoader.jsx
 
 const SkeletonCard = () => (
-  <div className="bg-white rounded-card shadow-card mb-5 overflow-hidden">
+  <div className="bg-white rounded-none sm:rounded-card border-x-0 border-y sm:border border-slate-800/40 mt-0 mb-6 overflow-hidden">
     {/* Image skeleton */}
     <div className="skeleton w-full aspect-video" />
     {/* Content skeleton */}
@@ -18,7 +18,7 @@ const SkeletonCard = () => (
 );
 
 const FeedLoader = ({ count = 3 }) => (
-  <div className="w-full max-w-feed mx-auto px-4">
+  <div className="w-full max-w-feed mx-auto px-0 sm:px-4 mt-0">
     {Array.from({ length: count }).map((_, i) => (
       <SkeletonCard key={i} />
     ))}

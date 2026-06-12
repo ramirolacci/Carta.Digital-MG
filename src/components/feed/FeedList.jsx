@@ -73,7 +73,7 @@ const FeedList = ({
   }
 
   return (
-    <div className="max-w-feed mx-auto px-4 py-6">
+    <div className="max-w-feed mx-auto px-0 sm:px-4 mt-0 pt-0 pb-6 sm:py-6">
       {promotions.map((promotion) => (
         <PromotionCard key={promotion.id} promotion={promotion} />
       ))}

@@ -7,7 +7,7 @@ const PromotionCard = memo(({ promotion }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
-    <article className="feed-card !opacity-100 bg-background-secondary rounded-card overflow-hidden mb-6 border border-slate-800/40 shadow-md">
+    <article className="feed-card !opacity-100 bg-background-secondary rounded-none sm:rounded-card overflow-hidden mt-0 mb-6 border-x-0 border-y sm:border border-slate-800/40 shadow-md">
       <div className="relative w-full min-h-[150px] bg-background-secondary flex items-center justify-center">
         {/* Skeleton while loading */}
         {!imgLoaded && !imgError && (
