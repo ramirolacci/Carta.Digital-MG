@@ -2,6 +2,38 @@
 
 Feed scrolleable de promociones con panel de administración completo, construido con React + Firebase.
 
+
+---
+
+## 📸 Galería de Imágenes
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <b>Feed de Promociones (Público)</b>
+      <br />
+      <img src="public/screenshots/feed.png" alt="Feed de Promociones" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <b>Información de Sucursal</b>
+      <br />
+      <img src="public/screenshots/sucursal.png" alt="Información de Sucursal" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <b>Panel de Administración</b>
+      <br />
+      <img src="public/screenshots/admin.png" alt="Panel de Administración" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <b>Crear Nueva Promoción</b>
+      <br />
+      <img src="public/screenshots/nueva_promocion.png" alt="Crear Nueva Promoción" width="100%" />
+    </td>
+  </tr>
+</table>
+
 ---
 
 ## ✨ Características
