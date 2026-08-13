@@ -41,7 +41,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
-      <div className="max-w-feed mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="max-w-feed md:max-w-none mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <a href="https://migusto.com.ar/" className="flex items-center gap-2.5 group">
           <img

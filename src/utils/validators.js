@@ -14,9 +14,7 @@ export const promotionSchema = z.object({
     .max(300, 'La descripción no puede superar los 300 caracteres.')
     .optional()
     .or(z.literal('')),
-  date: z
-    .string()
-    .min(1, 'La fecha es requerida.'),
+  date: z.string().optional(),
   active: z.boolean().default(true),
   imageUrl: z.string().optional(),
 });

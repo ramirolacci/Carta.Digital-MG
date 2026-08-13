@@ -1,31 +1,37 @@
 // src/services/promotionsService.js
-import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  where,
-  Timestamp,
-  limit,
-  startAfter,
-} from 'firebase/firestore';
-import {
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
-import { db, storage, isFirebaseConfigured } from './firebase';
+import { supabase, isSupabaseConfigured } from './supabase';
 
-const COLLECTION = 'promotions';
 const PAGE_SIZE = 10;
-
 const LOCAL_STORAGE_KEY = 'site_promociones_data';
+
+// Helper to map DB row (lowercase) to App object (camelCase)
+const toApp = (row) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    title: row.title || '',
+    description: row.description || '',
+    imageUrl: row.imageurl || '',
+    imageStoragePath: row.imagestoragepath || '',
+    date: row.date || '',
+    active: row.active ?? true,
+    createdAt: row.createdat || new Date().toISOString(),
+    updatedAt: row.updatedat || new Date().toISOString(),
+  };
+};
+
+// Helper to map App object (camelCase) to DB row (lowercase)
+const toDb = (promo) => {
+  if (!promo) return null;
+  return {
+    title: promo.title,
+    description: promo.description || '',
+    imageurl: promo.imageUrl,
+    imagestoragepath: promo.imageStoragePath || '',
+    date: promo.date,
+    active: promo.active,
+  };
+};
 
 const getLocalPromotions = () => {
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -112,7 +118,7 @@ const saveLocalPromotions = (promotions) => {
 // ─── Fetch ────────────────────────────────────────────────────────────────────
 
 export const getActivePromotions = async (lastDoc = null) => {
-  if (!isFirebaseConfigured) {
+  if (!isSupabaseConfigured) {
     try {
       const allLocal = getLocalPromotions();
       const active = allLocal.filter(p => p.active);
@@ -136,29 +142,22 @@ export const getActivePromotions = async (lastDoc = null) => {
     }
   }
   try {
-    let q = query(
-      collection(db, COLLECTION),
-      where('active', '==', true),
-      orderBy('date', 'desc'),
-      limit(PAGE_SIZE)
-    );
+    const offset = (lastDoc && !isNaN(lastDoc)) ? Number(lastDoc) : 0;
+    
+    const { data: promotions, error } = await supabase
+      .from('promotions')
+      .select('*')
+      .eq('active', true)
+      .order('date', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
 
-    if (lastDoc) {
-      q = query(
-        collection(db, COLLECTION),
-        where('active', '==', true),
-        orderBy('date', 'desc'),
-        startAfter(lastDoc),
-        limit(PAGE_SIZE)
-      );
-    }
+    if (error) throw error;
 
-    const snapshot = await getDocs(q);
-    const promotions = snapshot.docs.map(docToPromotion);
-    const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
-    const hasMore = snapshot.docs.length === PAGE_SIZE;
+    const lastVisible = offset + promotions.length;
+    const hasMore = promotions.length === PAGE_SIZE;
 
-    return { promotions, lastVisible, hasMore, error: null };
+    return { promotions: promotions.map(toApp), lastVisible, hasMore, error: null };
   } catch (error) {
     console.error('Error fetching active promotions:', error);
     return { promotions: [], lastVisible: null, hasMore: false, error: 'Error al cargar las promociones.' };
@@ -166,7 +165,7 @@ export const getActivePromotions = async (lastDoc = null) => {
 };
 
 export const getAllPromotions = async (filterStatus = 'all', sortOrder = 'newest') => {
-  if (!isFirebaseConfigured) {
+  if (!isSupabaseConfigured) {
     try {
       let promotions = getLocalPromotions();
       
@@ -190,31 +189,23 @@ export const getAllPromotions = async (filterStatus = 'all', sortOrder = 'newest
     }
   }
   try {
-    let q;
-    const sortDir = sortOrder === 'newest' ? 'desc' : 'asc';
+    const ascending = sortOrder !== 'newest';
+    let queryBuilder = supabase
+      .from('promotions')
+      .select('*')
+      .order('date', { ascending })
+      .order('id', { ascending });
 
     if (filterStatus === 'active') {
-      q = query(
-        collection(db, COLLECTION),
-        where('active', '==', true),
-        orderBy('date', sortDir)
-      );
+      queryBuilder = queryBuilder.eq('active', true);
     } else if (filterStatus === 'inactive') {
-      q = query(
-        collection(db, COLLECTION),
-        where('active', '==', false),
-        orderBy('date', sortDir)
-      );
-    } else {
-      q = query(
-        collection(db, COLLECTION),
-        orderBy('date', sortDir)
-      );
+      queryBuilder = queryBuilder.eq('active', false);
     }
 
-    const snapshot = await getDocs(q);
-    const promotions = snapshot.docs.map(docToPromotion);
-    return { promotions, error: null };
+    const { data: promotions, error } = await queryBuilder;
+    if (error) throw error;
+
+    return { promotions: promotions.map(toApp), error: null };
   } catch (error) {
     console.error('Error fetching all promotions:', error);
     return { promotions: [], error: 'Error al cargar las promociones.' };
@@ -222,7 +213,7 @@ export const getAllPromotions = async (filterStatus = 'all', sortOrder = 'newest
 };
 
 export const getPromotionById = async (id) => {
-  if (!isFirebaseConfigured) {
+  if (!isSupabaseConfigured) {
     try {
       const promotions = getLocalPromotions();
       const promotion = promotions.find(p => p.id === id);
@@ -235,12 +226,14 @@ export const getPromotionById = async (id) => {
     }
   }
   try {
-    const docRef = doc(db, COLLECTION, id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) {
-      return { promotion: null, error: 'Promoción no encontrada.' };
-    }
-    return { promotion: docToPromotion(docSnap), error: null };
+    const { data: promotion, error } = await supabase
+      .from('promotions')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return { promotion: toApp(promotion), error: null };
   } catch (error) {
     return { promotion: null, error: 'Error al cargar la promoción.' };
   }
@@ -249,16 +242,17 @@ export const getPromotionById = async (id) => {
 // ─── Create ───────────────────────────────────────────────────────────────────
 
 export const createPromotion = async (data, imageFile, onProgress) => {
-  if (!isFirebaseConfigured) {
+  if (!isSupabaseConfigured) {
     try {
       let imageUrl = data.imageUrl || '';
       
       if (imageFile) {
+        const compressed = await compressImage(imageFile);
         imageUrl = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result);
           reader.onerror = reject;
-          reader.readAsDataURL(imageFile);
+          reader.readAsDataURL(compressed);
         });
       }
       
@@ -300,7 +294,6 @@ export const createPromotion = async (data, imageFile, onProgress) => {
 
     if (!imageUrl) return { promotion: null, error: 'Se requiere una imagen.' };
 
-    const now = new Date().toISOString();
     const docData = {
       title: data.title,
       description: data.description || '',
@@ -308,12 +301,16 @@ export const createPromotion = async (data, imageFile, onProgress) => {
       imageStoragePath,
       date: data.date,
       active: data.active ?? true,
-      createdAt: now,
-      updatedAt: now,
     };
 
-    const docRef = await addDoc(collection(db, COLLECTION), docData);
-    return { promotion: { id: docRef.id, ...docData }, error: null };
+    const { data: insertedData, error } = await supabase
+      .from('promotions')
+      .insert([toDb(docData)])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { promotion: toApp(insertedData), error: null };
   } catch (error) {
     console.error('Error creating promotion:', error);
     return { promotion: null, error: 'Error al crear la promoción.' };
@@ -323,19 +320,20 @@ export const createPromotion = async (data, imageFile, onProgress) => {
 // ─── Update ───────────────────────────────────────────────────────────────────
 
 export const updatePromotion = async (id, data, imageFile, onProgress) => {
-  if (!isFirebaseConfigured) {
+  if (!isSupabaseConfigured) {
     try {
       const promotions = getLocalPromotions();
       const index = promotions.findIndex(p => p.id === id);
       if (index === -1) return { error: 'Promoción no encontrada.' };
       
-      let imageUrl = promotions[index].imageUrl;
+      let imageUrl = data.imageUrl || promotions[index].imageUrl;
       if (imageFile) {
+        const compressed = await compressImage(imageFile);
         imageUrl = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result);
           reader.onerror = reject;
-          reader.readAsDataURL(imageFile);
+          reader.readAsDataURL(compressed);
         });
       }
       
@@ -360,7 +358,7 @@ export const updatePromotion = async (id, data, imageFile, onProgress) => {
     const { promotion: existing } = await getPromotionById(id);
     if (!existing) return { error: 'Promoción no encontrada.' };
 
-    let imageUrl = existing.imageUrl;
+    let imageUrl = data.imageUrl || existing.imageUrl;
     let imageStoragePath = existing.imageStoragePath || '';
 
     if (imageFile) {
@@ -372,9 +370,15 @@ export const updatePromotion = async (id, data, imageFile, onProgress) => {
       if (uploadResult.error) return { error: uploadResult.error };
       imageUrl = uploadResult.url;
       imageStoragePath = uploadResult.path;
+    } else if (data.imageUrl && data.imageUrl !== existing.imageUrl) {
+      // Si se pasa una URL externa y existía una imagen en storage, eliminarla para liberar espacio
+      if (existing.imageStoragePath) {
+        await deleteImageFromStorage(existing.imageStoragePath);
+      }
+      imageUrl = data.imageUrl;
+      imageStoragePath = '';
     }
 
-    const docRef = doc(db, COLLECTION, id);
     const updates = {
       title: data.title,
       description: data.description || '',
@@ -382,10 +386,14 @@ export const updatePromotion = async (id, data, imageFile, onProgress) => {
       imageStoragePath,
       date: data.date,
       active: data.active,
-      updatedAt: new Date().toISOString(),
     };
 
-    await updateDoc(docRef, updates);
+    const { error } = await supabase
+      .from('promotions')
+      .update(toDb(updates))
+      .eq('id', id);
+
+    if (error) throw error;
     return { error: null };
   } catch (error) {
     console.error('Error updating promotion:', error);
@@ -396,7 +404,7 @@ export const updatePromotion = async (id, data, imageFile, onProgress) => {
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
 export const deletePromotion = async (id) => {
-  if (!isFirebaseConfigured) {
+  if (!isSupabaseConfigured) {
     try {
       const promotions = getLocalPromotions();
       const updated = promotions.filter(p => p.id !== id);
@@ -412,7 +420,12 @@ export const deletePromotion = async (id) => {
     if (promotion?.imageStoragePath) {
       await deleteImageFromStorage(promotion.imageStoragePath);
     }
-    await deleteDoc(doc(db, COLLECTION, id));
+    const { error } = await supabase
+      .from('promotions')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
     return { error: null };
   } catch (error) {
     console.error('Error deleting promotion:', error);
@@ -422,63 +435,142 @@ export const deletePromotion = async (id) => {
 
 // ─── Image Upload ─────────────────────────────────────────────────────────────
 
-export const uploadImage = (file, onProgress) => {
-  if (!isFirebaseConfigured) {
-    return Promise.resolve({ url: null, path: null, error: 'Firebase no está configurado.' });
-  }
+const compressImage = (file, maxWidth = 900, maxHeight = 1200, quality = 0.78) => {
   return new Promise((resolve) => {
-    const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-    const storageRef = ref(storage, `promotions/${fileName}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    if (!file.type || !file.type.startsWith('image/')) {
+      return resolve(file);
+    }
 
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        );
-        onProgress?.(progress);
-      },
-      (error) => {
-        console.error('Upload error:', error);
-        resolve({ url: null, path: null, error: 'Error al subir la imagen.' });
-      },
-      async () => {
-        try {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve({ url, path: `promotions/${fileName}`, error: null });
-        } catch {
-          resolve({ url: null, path: null, error: 'Error al obtener la URL de la imagen.' });
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / maxWidth > height / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
         }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const baseName = file.name ? file.name.replace(/\.[^/.]+$/, '') : 'image';
+
+        // Intentar compresión en formato WebP (formato ligero moderno)
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              // Fallback a JPEG si el navegador no genera WebP
+              canvas.toBlob(
+                (jpegBlob) => {
+                  if (!jpegBlob) return resolve(file);
+                  const compressedFile = new File([jpegBlob], `${baseName}.jpg`, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now(),
+                  });
+                  resolve(compressedFile);
+                },
+                'image/jpeg',
+                quality
+              );
+              return;
+            }
+            const compressedFile = new File([blob], `${baseName}.webp`, {
+              type: 'image/webp',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          'image/webp',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+
+export const uploadImage = async (file, onProgress) => {
+  if (!isSupabaseConfigured) {
+    return { url: null, path: null, error: 'Supabase no está configurado.' };
+  }
+
+  // Comprimir y convertir a WebP antes de subir
+  const compressedFile = await compressImage(file);
+  const ext = compressedFile.type === 'image/webp' ? 'webp' : 'jpg';
+  console.log(`Original: ${(file.size / 1024 / 1024).toFixed(2)}MB, Comprimido: ${(compressedFile.size / 1024).toFixed(2)}KB (${ext.toUpperCase()})`);
+
+  return new Promise((resolve) => {
+    // Generar nombre de archivo único
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${ext}`;
+    const filePath = `${fileName}`;
+
+    // Simular barra de progreso para mejor respuesta visual en la interfaz
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += Math.round(Math.random() * 15) + 5;
+      if (progress >= 90) {
+        progress = 90;
+        clearInterval(progressInterval);
       }
-    );
+      onProgress?.(progress);
+    }, 100);
+
+    supabase.storage
+      .from('promotions')
+      .upload(filePath, compressedFile, {
+        cacheControl: '31536000', // 1 año de caché (el nombre del archivo es único, evita re-descargas)
+        contentType: compressedFile.type,
+        upsert: false,
+      })
+      .then(({ data, error }) => {
+        clearInterval(progressInterval);
+        if (error) {
+          console.error('Upload error:', error);
+          resolve({ url: null, path: null, error: 'Error al subir la imagen.' });
+        } else {
+          onProgress?.(100);
+          const { data: { publicUrl } } = supabase.storage
+              .from('promotions')
+              .getPublicUrl(filePath);
+          resolve({ url: publicUrl, path: filePath, error: null });
+        }
+      })
+      .catch((err) => {
+        clearInterval(progressInterval);
+        console.error('Upload exception:', err);
+        resolve({ url: null, path: null, error: 'Error al subir la imagen.' });
+      });
   });
 };
 
 const deleteImageFromStorage = async (path) => {
-  if (!isFirebaseConfigured) return;
+  if (!isSupabaseConfigured) return;
   try {
-    const imageRef = ref(storage, path);
-    await deleteObject(imageRef);
+    const { error } = await supabase.storage
+      .from('promotions')
+      .remove([path]);
+    if (error) {
+      console.warn('Could not delete image from Supabase storage:', error);
+    }
   } catch (error) {
     // Non-critical: log but don't fail the operation
     console.warn('Could not delete image from storage:', error);
   }
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const docToPromotion = (docSnap) => {
-  const data = docSnap.data();
-  return {
-    id: docSnap.id,
-    title: data.title || '',
-    description: data.description || '',
-    imageUrl: data.imageUrl || '',
-    imageStoragePath: data.imageStoragePath || '',
-    date: data.date || '',
-    active: data.active ?? true,
-    createdAt: data.createdAt || new Date().toISOString(),
-    updatedAt: data.updatedAt || new Date().toISOString(),
-  };
 };

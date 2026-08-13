@@ -80,6 +80,11 @@ const Admin = () => {
         <AdminPanel />
       </main>
 
+      {/* Footer */}
+      <footer className="py-6 text-center text-xs text-text-secondary/50 select-none">
+        Desarrollado por el equipo de Sistemas de Mi Gusto
+      </footer>
+
       <ToastContainer />
     </div>
   );

@@ -1,5 +1,5 @@
 // src/components/admin/PromotionForm.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { promotionSchema } from '../../utils/validators';
@@ -15,14 +15,12 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formError, setFormError] = useState(null);
   const [imageRequired, setImageRequired] = useState(false);
-  const descriptionRef = useRef(null);
 
   const isEditing = !!initialData;
 
   const {
     register,
     handleSubmit,
-    watch,
     control,
     reset,
     formState: { errors },
@@ -47,32 +45,24 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
     }
   }, [initialData, reset]);
 
-  const descriptionRegister = register('description');
-
-  const resizeDescription = () => {
-    const textarea = descriptionRef.current;
-
-    if (!textarea) return;
-
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  };
-
-  useEffect(() => {
-    resizeDescription();
-  }, [watch('description')]);
-
   const handleFormSubmit = async (data) => {
     setFormError(null);
     setImageRequired(false);
 
-    // Require image for new promotions
+    // Requerir imagen si es una nueva promoción
     if (!isEditing && !imageFile) {
       setImageRequired(true);
       return;
     }
 
-    const result = await onSubmit(data, imageFile, (progress) => {
+    const payload = {
+      ...data,
+      date: initialData?.date || getTodayISO(),
+      description: '',
+      imageUrl: initialData?.imageUrl || '',
+    };
+
+    const result = await onSubmit(payload, imageFile, (progress) => {
       setUploadProgress(progress);
     });
 
@@ -82,8 +72,6 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
     }
   };
 
-  const descCount = watch('description')?.length || 0;
-
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
       <div className="p-6 space-y-5">
@@ -91,7 +79,7 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
           <Alert type="error" message={formError} onClose={() => setFormError(null)} />
         )}
 
-        {/* Image upload */}
+        {/* Image Upload */}
         <div>
           <label className="label">
             Imagen <RequiredAsterisk />
@@ -122,48 +110,6 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
           />
           {errors.title && (
             <p className="text-error text-xs mt-1">{errors.title.message}</p>
-          )}
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="label" htmlFor="description">
-            Descripción <span className="text-text-secondary font-normal">(opcional)</span>
-          </label>
-          <textarea
-            id="description"
-            {...descriptionRegister}
-            ref={(element) => {
-              descriptionRegister.ref(element);
-              descriptionRef.current = element;
-            }}
-            onInput={resizeDescription}
-            className={`input-field resize-none overflow-hidden ${errors.description ? 'error' : ''}`}
-            rows={1}
-            placeholder="Contá más detalles sobre la promoción..."
-            maxLength={300}
-          />
-          <div className="flex justify-between mt-1">
-            {errors.description ? (
-              <p className="text-error text-xs">{errors.description.message}</p>
-            ) : <span />}
-            <span className="text-xs text-text-secondary">{descCount}/300</span>
-          </div>
-        </div>
-
-        {/* Date */}
-        <div>
-          <label className="label" htmlFor="date">
-            Fecha de la promoción <RequiredAsterisk />
-          </label>
-          <input
-            id="date"
-            type="date"
-            {...register('date')}
-            className={`input-field ${errors.date ? 'error' : ''}`}
-          />
-          {errors.date && (
-            <p className="text-error text-xs mt-1">{errors.date.message}</p>
           )}
         </div>
 
