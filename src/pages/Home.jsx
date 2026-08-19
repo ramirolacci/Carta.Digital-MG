@@ -33,7 +33,7 @@ const Home = () => {
       <div className="min-h-screen bg-background py-10">
         <div className="max-w-xl mx-auto px-4 flex flex-col items-center text-center">
           {/* Sucursal Title */}
-          <h1 className="font-display text-4xl sm:text-5xl font-black text-text tracking-widest uppercase mb-10 border-b-2 border-primary pb-3 inline-block">
+          <h1 className="font-display text-2xl sm:text-4xl md:text-5xl font-black text-text tracking-wide sm:tracking-widest uppercase mb-6 sm:mb-10 border-b-2 border-primary pb-2 sm:pb-3 inline-block max-w-full break-words">
             {sucursal.nombre}
           </h1>
 
