@@ -62,16 +62,6 @@ Feed scrolleable de promociones con panel de administración completo, construid
 
 ---
 
-## 📋 Scripts disponibles
-
-| Comando | Descripción |
-|---|---|
-| `npm run dev` | Servidor de desarrollo |
-| `npm run build` | Build de producción |
-| `npm run preview` | Preview del build |
-
----
-
 ## 🎨 Paleta de colores
 
 | Color | Valor | Uso |
@@ -83,16 +73,6 @@ Feed scrolleable de promociones con panel de administración completo, construid
 | Texto | `#1A1A1A` | Texto principal |
 | Texto secundario | `#666666` | Texto auxiliar |
 | Error | `#E63946` | Errores |
-
----
-
-## 🗺️ Rutas
-
-| Ruta | Descripción | Acceso |
-|---|---|---|
-| `/` | Feed de promociones | Público |
-| `/login` | Inicio de sesión | Público |
-| `/admin` | Panel de administración | Solo usuarios autenticados |
 
 ---
 
