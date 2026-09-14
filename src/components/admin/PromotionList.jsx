@@ -22,11 +22,11 @@ const ConfirmDeleteModal = ({ promotion, onConfirm, onCancel, isDeleting }) => (
         />
       )}
       <div className="flex gap-3 justify-end pt-2">
-        <Button variant="ghost" size="sm" onClick={onCancel} disabled={isDeleting}>
-          Cancelar
-        </Button>
         <Button variant="danger" size="sm" loading={isDeleting} onClick={onConfirm}>
           Sí, eliminar
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onCancel} disabled={isDeleting}>
+          Cancelar
         </Button>
       </div>
     </div>

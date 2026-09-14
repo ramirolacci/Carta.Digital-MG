@@ -12,6 +12,7 @@ import { Save, X } from 'lucide-react';
 
 const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubmitting }) => {
   const [imageFile, setImageFile] = useState(null);
+  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formError, setFormError] = useState(null);
   const [imageRequired, setImageRequired] = useState(false);
@@ -42,6 +43,7 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
         date: initialData.date || getTodayISO(),
         active: initialData.active ?? true,
       });
+      setImageUrl(initialData.imageUrl || '');
     }
   }, [initialData, reset]);
 
@@ -49,8 +51,10 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
     setFormError(null);
     setImageRequired(false);
 
-    // Requerir imagen si es una nueva promoción
-    if (!isEditing && !imageFile) {
+    const effectiveImageUrl = imageUrl.trim();
+
+    // Requerir imagen (ya sea URL o archivo local)
+    if (!effectiveImageUrl && !imageFile) {
       setImageRequired(true);
       return;
     }
@@ -58,8 +62,8 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
     const payload = {
       ...data,
       date: initialData?.date || getTodayISO(),
-      description: '',
-      imageUrl: initialData?.imageUrl || '',
+      description: data.description || '',
+      imageUrl: effectiveImageUrl,
     };
 
     const result = await onSubmit(payload, imageFile, (progress) => {
@@ -79,19 +83,21 @@ const PromotionForm = ({ initialData, onSubmit, onCancel, onRequestClose, isSubm
           <Alert type="error" message={formError} onClose={() => setFormError(null)} />
         )}
 
-        {/* Image Upload */}
+        {/* Image Upload / URL Input */}
         <div>
           <label className="label">
-            Imagen <RequiredAsterisk />
+            Imagen de la promoción <RequiredAsterisk />
           </label>
           <ImageUploader
             currentImageUrl={initialData?.imageUrl}
+            imageUrl={imageUrl}
+            onUrlChange={setImageUrl}
             onFileSelect={setImageFile}
             uploadProgress={uploadProgress}
           />
           {imageRequired && (
             <p className="text-error text-sm mt-1.5 flex items-center gap-1">
-              La imagen es requerida.
+              Debe ingresar una URL de imagen (Postimages) o subir un archivo.
             </p>
           )}
         </div>
