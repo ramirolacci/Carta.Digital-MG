@@ -33,17 +33,83 @@ const toDb = (promo) => {
   };
 };
 
-const getLocalPromotions = () => {
+// ─── IndexedDB Persistent Storage (Fallback for local mode) ────────────────────
+const DB_NAME = 'CartaDigitalPromotionsDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'promotions_store';
+const STORAGE_KEY = 'all_promotions_key';
+
+const openDB = () => {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined' || !window.indexedDB) {
+      return reject(new Error('IndexedDB not supported'));
+    }
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = (event) => reject(event.target.error);
+  });
+};
+
+const getIDBPromotions = async () => {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(STORAGE_KEY);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => resolve(null);
+    });
+  } catch (e) {
+    console.warn('IndexedDB read error:', e);
+    return null;
+  }
+};
+
+const saveIDBPromotions = async (promotions) => {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(promotions, STORAGE_KEY);
+      request.onsuccess = () => resolve(true);
+      request.onerror = () => resolve(false);
+    });
+  } catch (e) {
+    console.warn('IndexedDB save error:', e);
+    return false;
+  }
+};
+
+const getLocalPromotions = async () => {
+  // 1. Try reading from IndexedDB (has virtually unlimited quota compared to 5MB localStorage)
+  const idbData = await getIDBPromotions();
+  if (idbData && Array.isArray(idbData) && idbData.length > 0) {
+    return idbData;
+  }
+
+  // 2. Fallback to localStorage and migrate to IndexedDB if exists
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        await saveIDBPromotions(parsed);
+        return parsed;
+      }
     } catch (e) {
       console.error('Error parsing local promotions:', e);
     }
   }
   
-  // Default list of 6 local promotion images
+  // 3. Default list of 6 local promotion images
   const defaultPromotions = [
     {
       id: 'local-1',
@@ -107,12 +173,31 @@ const getLocalPromotions = () => {
     },
   ];
   
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultPromotions));
+  await saveIDBPromotions(defaultPromotions);
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultPromotions));
+  } catch (e) {
+    // Ignore quota error for default set
+  }
   return defaultPromotions;
 };
 
-const saveLocalPromotions = (promotions) => {
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(promotions));
+const saveLocalPromotions = async (promotions) => {
+  // Always persist in IndexedDB first
+  await saveIDBPromotions(promotions);
+
+  // Attempt sync to localStorage, handling QuotaExceededError gracefully
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(promotions));
+  } catch (error) {
+    console.warn('localStorage quota exceeded. Data stored safely in IndexedDB.', error);
+    // Clear heavy key from localStorage if it's causing quota issues
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch (e) {
+      // Ignore
+    }
+  }
 };
 
 // ─── Fetch ────────────────────────────────────────────────────────────────────
@@ -120,7 +205,7 @@ const saveLocalPromotions = (promotions) => {
 export const getActivePromotions = async (lastDoc = null) => {
   if (!isSupabaseConfigured) {
     try {
-      const allLocal = getLocalPromotions();
+      const allLocal = await getLocalPromotions();
       const active = allLocal.filter(p => p.active);
       // Sort by date desc
       active.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -167,7 +252,7 @@ export const getActivePromotions = async (lastDoc = null) => {
 export const getAllPromotions = async (filterStatus = 'all', sortOrder = 'newest') => {
   if (!isSupabaseConfigured) {
     try {
-      let promotions = getLocalPromotions();
+      let promotions = await getLocalPromotions();
       
       if (filterStatus === 'active') {
         promotions = promotions.filter(p => p.active);
@@ -215,7 +300,7 @@ export const getAllPromotions = async (filterStatus = 'all', sortOrder = 'newest
 export const getPromotionById = async (id) => {
   if (!isSupabaseConfigured) {
     try {
-      const promotions = getLocalPromotions();
+      const promotions = await getLocalPromotions();
       const promotion = promotions.find(p => p.id === id);
       if (!promotion) {
         return { promotion: null, error: 'Promoción no encontrada.' };
@@ -271,9 +356,9 @@ export const createPromotion = async (data, imageFile, onProgress) => {
         updatedAt: now,
       };
       
-      const promotions = getLocalPromotions();
+      const promotions = await getLocalPromotions();
       promotions.unshift(newPromotion);
-      saveLocalPromotions(promotions);
+      await saveLocalPromotions(promotions);
       
       return { promotion: newPromotion, error: null };
     } catch (error) {
@@ -322,7 +407,7 @@ export const createPromotion = async (data, imageFile, onProgress) => {
 export const updatePromotion = async (id, data, imageFile, onProgress) => {
   if (!isSupabaseConfigured) {
     try {
-      const promotions = getLocalPromotions();
+      const promotions = await getLocalPromotions();
       const index = promotions.findIndex(p => p.id === id);
       if (index === -1) return { error: 'Promoción no encontrada.' };
       
@@ -347,7 +432,7 @@ export const updatePromotion = async (id, data, imageFile, onProgress) => {
         updatedAt: new Date().toISOString(),
       };
       
-      saveLocalPromotions(promotions);
+      await saveLocalPromotions(promotions);
       return { error: null };
     } catch (error) {
       console.error('Error updating local promotion:', error);
@@ -406,9 +491,9 @@ export const updatePromotion = async (id, data, imageFile, onProgress) => {
 export const deletePromotion = async (id) => {
   if (!isSupabaseConfigured) {
     try {
-      const promotions = getLocalPromotions();
+      const promotions = await getLocalPromotions();
       const updated = promotions.filter(p => p.id !== id);
-      saveLocalPromotions(updated);
+      await saveLocalPromotions(updated);
       return { error: null };
     } catch (error) {
       console.error('Error deleting local promotion:', error);
