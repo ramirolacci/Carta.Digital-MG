@@ -1,0 +1,105 @@
+.revista-section {
+    position: relative;
+    overflow: hidden;
+    height: calc(100vh - 64px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background-color: #000000;
+}
+
+.revista-content-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 10px;
+    width: 100%;
+    max-width: 1280px;
+    height: 100%;
+    max-height: calc(100vh - 72px);
+    margin: 0 auto;
+}
+
+.flipbook-wrapper,
+.revista-swiper-wrapper {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Efectos de la revista */
+.revista-flipbook,
+.revista-swiper {
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: transparent;
+    max-height: calc(100vh - 84px);
+}
+
+.revista-pagina {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+}
+
+.revista-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background-color: #000000;
+}
+
+/* Botones de navegación laterales pegados a la revista */
+.revista-nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 40;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.revista-nav-button:hover:not(:disabled) {
+    background: rgba(255, 107, 53, 0.95);
+    color: #ffffff;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+}
+
+.revista-nav-button.left {
+    left: 10px;
+}
+
+.revista-nav-button.right {
+    right: 10px;
+}
+
+.revista-nav-button.disabled,
+.revista-nav-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    box-shadow: none;
+}

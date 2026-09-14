@@ -18,7 +18,10 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.0",
+    "react-medium-image-zoom": "^5.4.9",
+    "react-pageflip": "^2.0.3",
     "react-router-dom": "^6.20.0",
+    "swiper": "^14.2.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {

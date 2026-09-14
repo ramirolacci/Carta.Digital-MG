@@ -9,7 +9,7 @@ import Login from './pages/Login';
 function App() {
   return (
     <ToastProvider>
-      <BrowserRouter basename="/cartadigital">
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           {/* Public feed */}
           <Route

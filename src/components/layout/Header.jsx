@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { sucursales } from '../../data/sucursalesData';
+import logoImg from '../../assets/logo-migusto-2025.png';
 
 const Header = () => {
   const location = useLocation();
@@ -39,13 +40,15 @@ const Header = () => {
     setSearchParams({});
   };
 
+  const activeView = searchParams.get('view') || 'promotions';
+
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="max-w-feed md:max-w-none mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <a href="https://migusto.com.ar/" className="flex items-center gap-2.5 group">
           <img
-            src={`${import.meta.env.BASE_URL}Logo Mi Gusto 2025.png`}
+            src={logoImg}
             alt="Mi Gusto Logo"
             className="w-12 h-12 object-contain rounded-btn"
           />
@@ -110,15 +113,47 @@ const Header = () => {
                 )}
               </div>
 
-              {/* Carta Digital Link */}
-              <button
-                onClick={handleClear}
-                className={`text-sm font-semibold transition-colors px-3 py-2 rounded-btn ${
-                  !activeSucursal ? 'text-primary font-bold' : 'text-text-secondary hover:text-primary'
-                }`}
-              >
-                Carta Digital
-              </button>
+              {/* Switch Sutil Animado: Carta digital | Revista */}
+              <div className="relative inline-grid grid-cols-2 bg-background-secondary p-0.5 rounded-full border border-gray-200/80 shadow-sm overflow-hidden select-none">
+                {/* Indicador deslizante animado */}
+                <div
+                  className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] bg-primary rounded-full transition-all duration-300 ease-out shadow-sm ${
+                    activeView === 'interactive' ? 'left-[calc(50%+1px)]' : 'left-0.5'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.delete('view');
+                    newParams.delete('sucursal');
+                    setSearchParams(newParams);
+                  }}
+                  className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-300 flex items-center justify-center text-center ${
+                    activeView !== 'interactive'
+                      ? 'text-white font-bold'
+                      : 'text-text-secondary hover:text-text'
+                  }`}
+                >
+                  Carta digital
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.set('view', 'interactive');
+                    newParams.delete('sucursal');
+                    setSearchParams(newParams);
+                  }}
+                  className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-300 flex items-center justify-center text-center ${
+                    activeView === 'interactive'
+                      ? 'text-white font-bold'
+                      : 'text-text-secondary hover:text-text'
+                  }`}
+                >
+                  Revista
+                </button>
+              </div>
             </>
           )}
 

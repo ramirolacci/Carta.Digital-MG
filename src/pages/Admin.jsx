@@ -6,6 +6,7 @@ import AdminPanel from '../components/admin/AdminPanel';
 import ToastContainer from '../components/common/ToastContainer';
 import { LogOut, Loader2, ShieldCheck, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import logoImg from '../assets/logo-migusto-2025.png';
 
 const Admin = () => {
   const { user, loading, logout } = useAuth();
@@ -40,7 +41,7 @@ const Admin = () => {
           {/* Logo */}
           <a href="https://migusto.com.ar/" className="flex items-center gap-2.5 group">
             <img
-              src={`${import.meta.env.BASE_URL}Logo Mi Gusto 2025.png`}
+              src={logoImg}
               alt="Mi Gusto Logo"
               className="w-10 h-10 object-contain rounded-btn"
             />

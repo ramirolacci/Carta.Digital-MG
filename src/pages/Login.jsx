@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import Button from '../components/common/Button';
 import Alert from '../components/common/Alert';
+import logoImg from '../assets/logo-migusto-2025.png';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const Login = () => {
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2.5 mb-4">
             <img
-              src={`${import.meta.env.BASE_URL}Logo Mi Gusto 2025.png`}
+              src={logoImg}
               alt="Mi Gusto Logo"
               className="w-16 h-16 object-contain rounded-card shadow-md"
             />

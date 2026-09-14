@@ -1,13 +1,16 @@
 // src/pages/Home.jsx
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Flame, BookOpen } from 'lucide-react';
 import { useFeedPromotions } from '../hooks/usePromotions';
 import FeedList from '../components/feed/FeedList';
+import Revista from '../components/common/Revista';
 import { sucursales } from '../data/sucursalesData';
 
 const Home = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const sucursalName = searchParams.get('sucursal') || '';
+  const viewMode = searchParams.get('view') || 'promotions';
 
   const {
     promotions,
@@ -23,6 +26,16 @@ const Home = () => {
   useEffect(() => {
     fetchInitial();
   }, [fetchInitial]);
+
+  const setViewMode = (mode) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (mode === 'interactive') {
+      newParams.set('view', 'interactive');
+    } else {
+      newParams.delete('view');
+    }
+    setSearchParams(newParams);
+  };
 
   const sucursal = sucursales.find(
     (s) => s.nombre.toLowerCase() === sucursalName.toLowerCase()
@@ -129,17 +142,24 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background mt-0 pt-0 pb-6 sm:py-6">
-      <FeedList
-        promotions={promotions}
-        loading={loading}
-        loadingMore={loadingMore}
-        error={error}
-        hasMore={hasMore}
-        onRetry={retry}
-        onLoadMore={fetchMore}
-      />
+      <div key={viewMode} className="animate-view-fade-in">
+        {viewMode === 'interactive' ? (
+          <Revista promotions={promotions} loading={loading} />
+        ) : (
+          <FeedList
+            promotions={promotions}
+            loading={loading}
+            loadingMore={loadingMore}
+            error={error}
+            hasMore={hasMore}
+            onRetry={retry}
+            onLoadMore={fetchMore}
+          />
+        )}
+      </div>
     </div>
   );
 };
 
 export default Home;
+
