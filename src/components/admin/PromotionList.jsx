@@ -2,7 +2,7 @@
 import { memo, useLayoutEffect, useRef, useState } from 'react';
 import { Pencil, Trash2, EyeOff, Calendar, ImageOff } from 'lucide-react';
 import gsap from 'gsap';
-import { formatDateShort } from '../../utils/helpers';
+import { formatDateShort, getFormattedImageUrl } from '../../utils/helpers';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 
@@ -16,7 +16,7 @@ const ConfirmDeleteModal = ({ promotion, onConfirm, onCancel, isDeleting }) => (
       </p>
       {promotion?.imageUrl && (
         <img
-          src={promotion.imageUrl?.startsWith('/') ? `${import.meta.env.BASE_URL}${promotion.imageUrl.slice(1)}` : promotion.imageUrl}
+          src={getFormattedImageUrl(promotion.imageUrl)}
           alt={promotion.title}
           className="w-full aspect-video object-cover rounded-btn"
         />
@@ -46,7 +46,7 @@ const PromotionListItem = memo(({ promotion, onEdit, onDelete }) => {
           </div>
         ) : (
           <img
-            src={promotion.imageUrl?.startsWith('/') ? `${import.meta.env.BASE_URL}${promotion.imageUrl.slice(1)}` : promotion.imageUrl}
+            src={getFormattedImageUrl(promotion.imageUrl)}
             alt={promotion.title}
             loading="lazy"
             onError={() => setImgError(true)}

@@ -175,6 +175,14 @@ const ImageUploader = ({
                 Abrir Postimages
               </a>
             </div>
+            {urlInput.includes('postimg.cc') && !urlInput.includes('i.postimg.cc') && (
+              <div className="mt-2 p-2.5 rounded-btn bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2">
+                <AlertCircle size={16} className="shrink-0 mt-0.5 text-amber-600" />
+                <div>
+                  <strong>Atención con el enlace:</strong> Copiaste el enlace de la página de Postimages. Copiá el <strong>Enlace directo</strong> (el que empieza con <code>https://i.postimg.cc/...</code> y termina en <code>.jpg</code> o <code>.png</code>).
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Vista previa de URL */}

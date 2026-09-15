@@ -8,7 +8,7 @@ import { Loader2, ImageOff } from 'lucide-react';
 import 'swiper/css';
 import 'swiper/css/effect-flip';
 import 'react-medium-image-zoom/dist/styles.css';
-import './Revista.css';
+import { getFormattedImageUrl } from '../../utils/helpers';
 import tapaImg from '../../assets/tapa1.jpg';
 
 const Revista = ({ promotions = [], loading = false }) => {
@@ -34,15 +34,7 @@ const Revista = ({ promotions = [], loading = false }) => {
   // Extraer las imágenes de las promociones activas cargadas por el admin
   const promoPages = promotions
     .filter((p) => p && p.imageUrl)
-    .map((p) => {
-      const url = p.imageUrl;
-      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
-        return url;
-      }
-      const baseUrl = import.meta.env.BASE_URL;
-      const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
-      return `${baseUrl}${cleanUrl}`;
-    });
+    .map((p) => getFormattedImageUrl(p.imageUrl));
 
   // La portada es tapa1.jpg y luego siguen las promociones de la carta digital
   const pages = [tapaUrl, ...promoPages];

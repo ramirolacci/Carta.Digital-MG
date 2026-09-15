@@ -93,3 +93,18 @@ export const debounce = (func, wait) => {
     timeout = setTimeout(() => func(...args), wait);
   };
 };
+
+/**
+ * Safely format image URLs handling base paths, relative paths, and external HTTP URLs
+ */
+export const getFormattedImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  return `${cleanBase}${cleanUrl}`;
+};
+
